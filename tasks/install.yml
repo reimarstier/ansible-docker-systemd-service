@@ -32,3 +32,6 @@
     masked: "{{ service_masked }}"
     state: "{{ service_state }}"
   register: enable_and_start
+
+- name: Restart container immediately if necessary
+  meta: flush_handlers

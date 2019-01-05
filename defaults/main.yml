@@ -5,6 +5,8 @@ container_labels: []
 container_links: []
 container_ports: []
 container_volumes: []
+container_wait_time: 0
+container_wait_port: 3000
 service_enabled: true
 service_masked: false
 service_state: started

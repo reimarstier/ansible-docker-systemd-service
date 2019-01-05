@@ -1,7 +1,33 @@
 ---
-
+# bogus workaround because listen directive does not seem to work with variables
 - name: "restart container {{ container_name }}"
+  command: /bin/true
+  notify:
+  - "restart container service {{ container_name }}"
+  - "get container ip {{ container_name }}"
+
+- name: "restart container service {{ container_name }}"
   service:
     name: '{{ container_name }}_container.service'
     state: restarted
   when: service_state != "stopped" and enable_and_start.changed == False
+
+- name: "get container ip {{ container_name }}"
+  shell: >
+    docker inspect
+    -f  {% raw %} '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' {% endraw %}
+    {{ container_name }}
+  retries: 5
+  delay: 5
+  register: _container_ips
+  until: _container_ips.rc == 0
+  notify: "wait until {{ container_name }} opens port {{ container_wait_port }}"
+
+- name: "wait until {{ container_name }} opens port {{ container_wait_port }}"
+  wait_for:
+    host: '{{ _container_ips.stdout_lines | first }}'
+    port: '{{ container_wait_port }}'
+    state: started
+    delay: 5
+    timeout: '{{ container_wait_time | int }}'
+  when: container_wait_time > 0
