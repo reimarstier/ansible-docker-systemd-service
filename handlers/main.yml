@@ -20,8 +20,9 @@
   retries: 5
   delay: 5
   register: _container_ips
-  until: _container_ips.rc == 0
+  until: _container_ips.rc == 0 and _container_ips.stdout | length > 0
   notify: "wait until {{ container_name }} opens port {{ container_wait_port }}"
+  when: container_wait_time | int > 0
 
 - name: "wait until {{ container_name }} opens port {{ container_wait_port }}"
   wait_for:
@@ -30,4 +31,4 @@
     state: started
     delay: 5
     timeout: '{{ container_wait_time | int }}'
-  when: container_wait_time > 0
+  when: container_wait_time | int > 0

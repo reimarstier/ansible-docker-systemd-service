@@ -11,13 +11,39 @@ Requires=docker.service
 {% if container_env is defined %}
 EnvironmentFile={{ sysconf_dir }}/{{ container_name }}
 {% endif %}
+{% if cron_timer_enabled %}
+Type=oneshot
+{% else %}
 ExecStartPre=-/usr/bin/docker rm -f {{ container_name }}
-ExecStart=/usr/bin/docker run --name {{ container_name }} --rm {% if container_env is defined %}--env-file {{ sysconf_dir }}/{{ container_name }} {% endif %}{{ params('v', container_volumes) }}{{ params('p', container_ports) }}{{ params('-link', container_links) }}{{ params('l', container_labels) }}{{ container_args | default('') |trim }} {{ container_image }} {{ container_cmd | default('') | trim }}
-ExecStop=/usr/bin/docker stop {{ container_name }}
+{% endif %}
+ExecStart=/usr/bin/docker run --name {{ container_name }} --rm \
+    {% if container_entrypoint %}
+    --entrypoint "{{ container_entrypoint }}" \
+    {% endif %}
+    {% if container_env is defined %}
+    --env-file {{ sysconf_dir }}/{{ container_name }} \
+    {% endif %}
+    {{ params('v', container_volumes) }} \
+{% if container_ports %}
+    {{ params('p', container_ports) }} \
+{% endif %}
+{% if container_links %}
+    {{ params('-link', container_links) }} \
+{% endif %}
+{% if container_labels %}
+    {{ params('l', container_labels) }} \
+{% endif %}
+{% if container_args %}
+    {{ container_args | default('') |trim }} \
+{% endif %}
+    {{ container_image }} {{ container_cmd | default('') | trim }}
 
-SyslogIdentifier={{ container_name }}
+{% if not cron_timer_enabled %}
+ExecStop=/usr/bin/docker stop {{ container_name }}
 Restart=always
 RestartSec=10s
+{% endif %}
+SyslogIdentifier={{ container_name }}
 
 [Install]
 WantedBy=docker.service

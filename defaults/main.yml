@@ -5,8 +5,14 @@ container_labels: []
 container_links: []
 container_ports: []
 container_volumes: []
+container_cmd: ""
+container_entrypoint: False
+container_args: ""
 container_wait_time: 0
 container_wait_port: 3000
 service_enabled: true
 service_masked: false
 service_state: started
+service_oneshot: False
+cron_timer_enabled: False
+cron_timer_calendar: "daily"
